@@ -335,6 +335,11 @@ class Cpdf
     ];
 
     /**
+     * @var array Files in memory which we already fetched from disk.
+     */
+    protected $file_cache = [];
+
+    /**
      * Class constructor
      * This will start a new document
      *
@@ -4974,7 +4979,16 @@ EOT;
         if (isset($this->imagelist[$file])) {
             $img = null;
         } else {
-            $info = file_get_contents($file, false, null, 24, 5);
+            if (defined('DOMPDF_FILE_CACHE') && DOMPDF_FILE_CACHE && array_key_exists($file, $this->file_cache)) {
+                $info = $this->file_cache[$file];
+            } else {
+                $info = file_get_contents($file, false, null, 24, 5);
+            }
+
+            if (defined('DOMPDF_FILE_CACHE') && DOMPDF_FILE_CACHE) {
+                $this->file_cache[$file] = $info;
+            }
+
             $meta = unpack("CbitDepth/CcolorType/CcompressionMethod/CfilterMethod/CinterlaceMethod", $info);
             $bit_depth = $meta["bitDepth"];
             $color_type = $meta["colorType"];
